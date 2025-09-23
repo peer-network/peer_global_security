@@ -6,7 +6,8 @@ on:
       config:
         description: "Optional path to gitleaks.toml"
         required: false
-        default: ".gitleaks.toml"
+        default: "gitleaks.toml"
+        type: string
 
 jobs:
   gitleaks_scan:
