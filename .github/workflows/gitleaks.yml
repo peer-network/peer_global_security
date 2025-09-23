@@ -1,0 +1,51 @@
+name: Reusable Gitleaks Scan
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: "Optional path to gitleaks.toml"
+        required: false
+        default: ".gitleaks.toml"
+
+jobs:
+  gitleaks_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks (staged changes only, like pre-commit)
+        run: |
+          mkdir -p .gitleaks_out
+          set -o pipefail
+
+          # Diff PR branch against base branch
+          git fetch origin ${{ github.base_ref }}
+          git diff --unified=0 --no-color origin/${{ github.base_ref }}...HEAD | \
+            docker run --rm -i -v ${{ github.workspace }}:/repo \
+              ghcr.io/gitleaks/gitleaks:v8.28.0 \
+              detect \
+                --pipe \
+                --config=/repo/${{ inputs.config }} \
+                --report-format=json \
+                --report-path=/repo/.gitleaks_out/gitleaks-report.json \
+                --no-banner | tee gitleaks.log
+
+          if grep -q '"RuleID":' .gitleaks_out/gitleaks-report.json; then
+            echo "Possible secrets detected!"
+            echo "See .gitleaks_out/gitleaks-report.json for details"
+            echo "CI blocked. Contact Backend Lead / CTO / DevOps if this is intentional."
+            exit 1
+          else
+            echo "No secrets found. Proceeding..."
+          fi
+
+      - name: Upload Gitleaks Report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: gitleaks-report
+          path: .gitleaks_out/gitleaks-report.json
