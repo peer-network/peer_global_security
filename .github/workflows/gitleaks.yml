@@ -38,7 +38,7 @@ jobs:
           if grep -q '"RuleID":' .gitleaks_out/gitleaks-report.json; then
             echo "Possible secrets detected!"
             echo "See .gitleaks_out/gitleaks-report.json for details"
-            echo "CI blocked. Contact Backend Lead / CTO / DevOps if this is intentional."
+            echo "CI blocked. Team Lead / CTO / DevOps if this is intentional."
             exit 1
           else
             echo "No secrets found. Proceeding..."
