@@ -8,6 +8,11 @@ on:
         required: false
         default: "gitleaks.toml"
         type: string
+      ignore_path:
+        description: "Optional path to gitleaksignore file"
+        required: false
+        default: ".gitleaksignore"
+        type: string
 
 jobs:
   gitleaks_scan:
@@ -31,7 +36,7 @@ jobs:
               detect \
                 --pipe \
                 --config=/repo/${{ inputs.config }} \
-                --gitleaks-ignore-path=/repo/.gitleaksignore \
+                --gitleaks-ignore-path=/repo/${{ inputs.ignore_path }} \
                 --report-format=json \
                 --report-path=/repo/.gitleaks_out/gitleaks-report.json \
                 --no-banner | tee gitleaks.log
